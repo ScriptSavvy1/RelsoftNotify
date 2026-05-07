@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendExpiryNotification } from '@/lib/email/resend'
+import { formatDate } from '@/lib/utils'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -14,8 +16,20 @@ export async function POST(request: Request) {
 
   // Test email mode
   if (body.test) {
-    // TODO: SendGrid integration
-    return NextResponse.json({ message: 'SendGrid not configured yet. Test email would be sent.' })
+    try {
+      await sendExpiryNotification({
+        to: user.email || 'test@example.com',
+        contactName: 'Test User',
+        companyName: 'Test Company',
+        serviceName: 'Test Service',
+        serviceCategory: 'Software License',
+        expiryDate: formatDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+        daysLeft: 7,
+      })
+      return NextResponse.json({ message: 'Test email sent successfully!' })
+    } catch (err: any) {
+      return NextResponse.json({ error: err.message || 'Failed to send test email' }, { status: 500 })
+    }
   }
 
   const { serviceId } = body
@@ -23,7 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'serviceId is required' }, { status: 400 })
   }
 
-  // Get service with company and contacts
+  // Get service with company
   const { data: service } = await supabase
     .from('services')
     .select('*, company:companies(name)')
@@ -48,10 +62,19 @@ export async function POST(request: Request) {
   const daysUntil = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
   let sentCount = 0
+  let failedCount = 0
+
   for (const contact of contacts) {
     try {
-      // TODO: SendGrid integration
-      console.log(`[MANUAL ALERT] Email to ${contact.email} for ${service.name}`)
+      await sendExpiryNotification({
+        to: contact.email,
+        contactName: contact.name,
+        companyName: (service as any).company?.name || 'Unknown',
+        serviceName: service.name,
+        serviceCategory: service.category || '',
+        expiryDate: formatDate(service.expiry_date),
+        daysLeft: daysUntil,
+      })
 
       await supabase.from('notification_logs').insert({
         service_id: serviceId,
@@ -70,8 +93,13 @@ export async function POST(request: Request) {
         status: 'failed',
         error_message: err.message,
       })
+      failedCount++
     }
   }
 
-  return NextResponse.json({ message: `Alert sent to ${sentCount} contacts`, sent: sentCount })
+  return NextResponse.json({
+    message: `Alert sent to ${sentCount} contact${sentCount !== 1 ? 's' : ''}`,
+    sent: sentCount,
+    failed: failedCount,
+  })
 }

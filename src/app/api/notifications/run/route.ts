@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendExpiryNotification } from '@/lib/email/resend'
+import { formatDate } from '@/lib/utils'
 
 export async function POST(request: Request) {
   // Verify cron secret
@@ -16,10 +18,10 @@ export async function POST(request: Request) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Get all active services
+  // Get all active services with their companies
   const { data: services } = await supabase
     .from('services')
-    .select('*, company:companies(name), contacts:contacts(id, name, email)')
+    .select('*, company:companies(name)')
     .eq('status', 'active')
 
   if (!services || services.length === 0) {
@@ -49,13 +51,24 @@ export async function POST(request: Request) {
     if (existing && existing.length > 0) continue
 
     // Get contacts for this company
-    const contacts = (service as any).contacts || []
-    if (contacts.length === 0) continue
+    const { data: contacts } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('company_id', service.company_id)
+
+    if (!contacts || contacts.length === 0) continue
 
     for (const contact of contacts) {
       try {
-        // TODO: SendGrid integration - currently logging only
-        console.log(`[NOTIFICATION] Would send email to ${contact.email} for ${service.name} (${daysUntil} days)`)
+        await sendExpiryNotification({
+          to: contact.email,
+          contactName: contact.name,
+          companyName: (service as any).company?.name || 'Unknown Company',
+          serviceName: service.name,
+          serviceCategory: service.category || '',
+          expiryDate: formatDate(service.expiry_date),
+          daysLeft: daysUntil,
+        })
 
         await supabase.from('notification_logs').insert({
           service_id: service.id,
@@ -66,6 +79,7 @@ export async function POST(request: Request) {
         })
         sentCount++
       } catch (err: any) {
+        console.error(`Failed to send to ${contact.email}:`, err.message)
         await supabase.from('notification_logs').insert({
           service_id: service.id,
           contact_id: contact.id,
