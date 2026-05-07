@@ -32,7 +32,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-600 rounded-2xl mb-4 shadow-lg shadow-brand-600/30">
             <img
-              src="/logo.svg"
+              src="/logo.png"
               alt="Relsoft"
               className="w-10 h-10 object-contain"
               onError={(e) => {

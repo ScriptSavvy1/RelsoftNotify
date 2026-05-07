@@ -49,11 +49,11 @@ export default async function CompaniesPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Companies</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Companies</h1>
         <Link
           href="/companies/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl shadow-lg shadow-brand-600/25 transition-all"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl shadow-lg shadow-brand-600/25 transition-all w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           Add Company
@@ -98,7 +98,31 @@ export default async function CompaniesPage({
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile Card View */}
+            <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {companiesWithExpiry.map((company: any) => (
+                <Link key={company.id} href={`/companies/${company.id}`} className="flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-brand-50 dark:bg-brand-950/30 rounded-full flex items-center justify-center">
+                      <Building2 className="w-4 h-4 text-brand-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{company.name}</p>
+                      <p className="text-xs text-slate-500">{company.industry || 'No industry'} · {company.serviceCount} services</p>
+                    </div>
+                  </div>
+                  <span className={cn(
+                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border shrink-0',
+                    company.serviceCount > 0 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                  )}>
+                    {company.serviceCount > 0 ? 'Active' : 'Empty'}
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-800">
@@ -120,56 +144,26 @@ export default async function CompaniesPage({
                               <Building2 className="w-4 h-4 text-brand-600" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">
-                                {company.name}
-                              </p>
-                              {company.industry && (
-                                <p className="text-xs text-slate-500">{company.industry}</p>
-                              )}
+                              <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{company.name}</p>
+                              {company.industry && <p className="text-xs text-slate-500">{company.industry}</p>}
                             </div>
                           </Link>
                         </td>
-                        <td className="px-5 py-3.5 text-center">
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {company.serviceCount}
-                          </span>
-                        </td>
+                        <td className="px-5 py-3.5 text-center text-sm font-medium text-slate-700 dark:text-slate-300">{company.serviceCount}</td>
                         <td className="px-5 py-3.5">
                           {company.nextExpiry ? (
-                            <span className={cn(
-                              'text-sm',
-                              hasExpiredServices ? 'text-red-600 font-medium' : 'text-slate-600 dark:text-slate-300'
-                            )}>
-                              {formatDate(company.nextExpiry)}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-slate-400">—</span>
-                          )}
+                            <span className={cn('text-sm', hasExpiredServices ? 'text-red-600 font-medium' : 'text-slate-600 dark:text-slate-300')}>{formatDate(company.nextExpiry)}</span>
+                          ) : <span className="text-sm text-slate-400">—</span>}
                         </td>
                         <td className="px-5 py-3.5 text-center">
-                          <span className={cn(
-                            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border',
-                            company.serviceCount > 0
-                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                              : 'bg-slate-100 text-slate-600 border-slate-200'
-                          )}>
+                          <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border', company.serviceCount > 0 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200')}>
                             {company.serviceCount > 0 ? 'Active' : 'No Services'}
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <Link
-                              href={`/companies/${company.id}`}
-                              className="px-2.5 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
-                            >
-                              View
-                            </Link>
-                            <Link
-                              href={`/companies/${company.id}/edit`}
-                              className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                            >
-                              Edit
-                            </Link>
+                            <Link href={`/companies/${company.id}`} className="px-2.5 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">View</Link>
+                            <Link href={`/companies/${company.id}/edit`} className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Edit</Link>
                             <DeleteCompanyButton companyId={company.id} companyName={company.name} />
                           </div>
                         </td>
@@ -179,9 +173,8 @@ export default async function CompaniesPage({
                 </tbody>
               </table>
             </div>
-            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-              Showing <span className="font-medium text-slate-700 dark:text-slate-300">{companiesWithExpiry.length}</span> of{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-300">{companiesWithExpiry.length}</span> companies
+            <div className="px-4 sm:px-5 py-3 border-t border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-500">
+              Showing <span className="font-medium text-slate-700 dark:text-slate-300">{companiesWithExpiry.length}</span> companies
             </div>
           </>
         )}

@@ -45,7 +45,7 @@ export function Sidebar({ userEmail }: SidebarProps) {
       )}>
         <div className="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-brand-600/30">
           <img
-            src="/logo.svg"
+            src="/logo.png"
             alt="RS"
             className="w-6 h-6 object-contain"
             onError={(e) => {
