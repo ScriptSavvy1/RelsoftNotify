@@ -33,8 +33,9 @@ export function SettingsForm({ settings }: { settings: Record<string, string> })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ test: true }),
       })
-      if (res.ok) toast.success('Test email sent!')
-      else toast.error('Email sending not configured yet')
+      const data = await res.json()
+      if (res.ok) toast.success(data.message || 'Test email sent!')
+      else toast.error(data.error || 'Failed to send test email')
     } catch { toast.error('Failed to send test email') }
     setTesting(false)
   }
@@ -75,11 +76,11 @@ export function SettingsForm({ settings }: { settings: Record<string, string> })
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-              SendGrid From Email
+              Resend From Email
             </label>
             <input
               disabled
-              value={settings.sendgrid_from_email || process.env.NEXT_PUBLIC_APP_URL ? 'notify@relsoft.com' : 'Not configured'}
+              value={'onboarding@resend.dev (free tier)'}
               className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-500 cursor-not-allowed"
             />
             <p className="text-xs text-slate-500 mt-1">Managed via environment variables</p>
