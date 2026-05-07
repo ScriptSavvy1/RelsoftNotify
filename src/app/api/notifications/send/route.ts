@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   if (body.test) {
     try {
       await sendExpiryNotification({
-        to: user.email || 'test@example.com',
+        to: 'abdirahman.relsoft@gmail.com',
         contactName: 'Test User',
         companyName: 'Test Company',
         serviceName: 'Test Service',
